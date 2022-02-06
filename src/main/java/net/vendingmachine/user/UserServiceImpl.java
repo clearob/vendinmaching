@@ -39,28 +39,6 @@ public class UserServiceImpl implements UserService {
 
 
 
-    /*
-    @Override
-    public Optional<User> getUserById(long id) {
-        LOGGER.debug("Getting user={}", id);
-        return Optional.ofNullable(userRepository.findById(id).get());
-    }
-
-    @Override
-    public Optional<User> getUserByUsername(String username) {
-        LOGGER.debug("Getting user by username ={}",username);
-        return userRepository.findOneByUsername(username);
-    }
-
-    @Override
-    public Collection<User> getAllUsers() {
-        LOGGER.debug("Getting all users");
-        return userRepository.findAll(Sort.by("email"));
-    }
-
-    @Override
-
-*/
     @Override
     public UserDetails  loadUserByUsername(String username) throws UsernameNotFoundException {
         User user =userRepository.findOneByUsername(username);
@@ -73,12 +51,7 @@ public class UserServiceImpl implements UserService {
 
 
         Set<GrantedAuthority> grantedAuthorities = new HashSet<>(); // use list if you wish
-        /*
-        for (Role role : user.getRole()) {
-            grantedAuthorities.add(new SimpleGrantedAuthority(role.getName()));
-        }
 
-         */
         grantedAuthorities.add(new SimpleGrantedAuthority(user.getRole().name()));
 
         return new org.springframework.security.core.userdetails.User(

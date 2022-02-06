@@ -101,7 +101,6 @@ public class User implements UserDetails {
         return "User{" +
                 "id=" + id +
                 ", user=" + username +
-                //", passwordHash='" + passwordHash.substring(0, 10) +
                 ", role=" + role +
                 '}';
     }

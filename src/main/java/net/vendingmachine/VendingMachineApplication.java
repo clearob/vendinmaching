@@ -14,9 +14,8 @@ import javax.servlet.annotation.WebServlet;
 
 
 @SpringBootApplication
-//@ComponentScan(basePackages = {"com.xxx.xxx.dao"})
+
 @ComponentScan(basePackages = {"net.vendingmachine"})//to scan repository files
-//@EntityScan("net.vendingmachine.domain" )
 
 @EnableJpaRepositories("net.vendingmachine.repository")
 
@@ -25,12 +24,6 @@ public class VendingMachineApplication extends SpringBootServletInitializer {
     public static void main(String[] args) {
         SpringApplication.run(VendingMachineApplication.class, args);
     }
-/*
-    @Override
-    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-        return application.sources(VendingMachineApplication.class);
-    }
-*/
 
 
 }

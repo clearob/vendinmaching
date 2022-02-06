@@ -26,13 +26,6 @@ public class ProducteServiceImpl implements ProductService {
 
     @Override
     public List<Product> getAllProducts() {
-/*
-        EntityManagerFactory factory = Persistence.createEntityManagerFactory("ProductRepository");
-        EntityManager em = factory.createEntityManager();
-        Query q = em.createQuery("from Product e", Product.class);
-        return em.createNamedQuery("Product.findAll").getResultList();
- */
-        //  return  productRepository.findAll();
         return entitymanager.createQuery("from Product", Product.class).getResultList();
     }
 
@@ -59,8 +52,6 @@ public class ProducteServiceImpl implements ProductService {
 
     @Override
     public Product update(Product product) {
-        //Product prod = findByProductSeller(product.getId(), product.getSellerId());
-        //LOGGER.info();
         return productRepository.save(product);
     }
 

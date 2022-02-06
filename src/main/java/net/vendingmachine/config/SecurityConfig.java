@@ -22,45 +22,7 @@ class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private UserDetailsService userDetailsService;
 
-    //@Override
-    protected void configure_old(HttpSecurity http) throws Exception {
-       /*
-        http.authorizeRequests()
-                .antMatchers("/", "/public/**","/h2/**").permitAll()
-                .antMatchers("/user/**").permitAll()
-                .antMatchers("/users/**").permitAll()
-                .anyRequest().permitAll() //.fullyAuthenticated()
-                .and()
-                .formLogin()
-                .loginPage("/login")
-                .failureUrl("/login?error")
-                .usernameParameter("email")
-                .permitAll()
-                .and()
-                .logout()
-                .logoutUrl("/logout")
-                .deleteCookies("remember-me")
-                .logoutSuccessUrl("/")
-                .permitAll()
-                .and()
-                .rememberMe();
 
-        */
-
-        http.authorizeRequests()
-                .antMatchers("/").permitAll()
-                .antMatchers("/h2-console/**").permitAll()
-                .antMatchers("/h2/**").permitAll()
-                .antMatchers("/login/**").fullyAuthenticated();
-
-
-        http.csrf().disable();
-        http.headers().frameOptions().disable();
-
-    }
-
-
-   // @Override
     protected void configure(HttpSecurity http) throws Exception
     {
         String[] publicUrls=  {"/api/user", "/api/allusers", "/api/products"};

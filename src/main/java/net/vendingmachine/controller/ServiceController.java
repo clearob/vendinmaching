@@ -56,13 +56,17 @@ public class ServiceController {
 
 
     @PostMapping(value = "/user", consumes="application/json")
-    @ResponseStatus(HttpStatus.CREATED)
     public HttpStatus create(@RequestBody
                                      User entity) {
         ResponseEntity<User> response = new ResponseEntity<>(entity, HttpStatus.BAD_REQUEST);
         LOGGER.info("add user");
-        User record = userService.create(entity);
-        response = new ResponseEntity<>(record, HttpStatus.CREATED);
+        User record = null;
+        try {
+            record = userService.create(entity);
+            response = new ResponseEntity<>(record, HttpStatus.CREATED);
+        }catch(Exception ex){
+            response = new ResponseEntity<>(record, HttpStatus.NOT_ACCEPTABLE);
+        }
         return response.getStatusCode();
     }
 
@@ -92,9 +96,8 @@ public class ServiceController {
                         resp.put("warning", "your account deposit is insufficient ...");
                 }else
                     resp.put("warning", "for chosen product avaliability is insufficient");
-            }
-
-
+            }else
+                resp.put("warning", "productid not existing");
         }
         else
             resp.put("warning", "your account is not authorized to buy");
@@ -104,7 +107,6 @@ public class ServiceController {
 
 
     @PutMapping(value = "/deposit", consumes="application/json")
-    //@ResponseStatus(HttpStatus.CREATED)
     public HttpStatus deposit(@RequestBody
                                       User entity,
                               Authentication authentication) {
@@ -143,7 +145,6 @@ public class ServiceController {
 
 
     @RequestMapping(value = "/products", method = RequestMethod.GET,produces="application/json")
-    @ResponseBody
     public List<Product> getProducts() {
         LOGGER.info("list of products");
         return productService.getAllProducts();
@@ -151,21 +152,23 @@ public class ServiceController {
 
     //@PreAuthorize("hasRole(SELLER)")
     @PostMapping(value = "/createproduct", consumes="application/json")
-    @ResponseStatus(HttpStatus.CREATED)
     public HttpStatus create(@RequestBody
                                      Product entity) {
         ResponseEntity<Product> response = new ResponseEntity<Product>(entity,HttpStatus.METHOD_NOT_ALLOWED);;
         if(hasRole("SELLER")) {
             LOGGER.info("add product");
             Product record = null;
-            productService.create(entity);
-            response = new ResponseEntity<>(record, HttpStatus.CREATED);
+            try {
+                productService.create(entity);
+                response = new ResponseEntity<>(record, HttpStatus.CREATED);
+            }catch (Exception ex){
+                response = new ResponseEntity<>(record, HttpStatus.NOT_ACCEPTABLE);
+            }
         }
         return response.getStatusCode();
     }
 
     @PutMapping(value = "/updateproduct", consumes="application/json")
-    @ResponseStatus(HttpStatus.CREATED)
     public HttpStatus updateProduct(@RequestBody
                                             Product entity,
                                     Authentication authentication) {
@@ -181,7 +184,6 @@ public class ServiceController {
     }
 
     @DeleteMapping(value = "/deleteproduct", consumes="application/json")
-    @ResponseStatus(HttpStatus.CREATED)
     public HttpStatus deleteProduct(@RequestBody
                                             Product entity,
                                     Authentication authentication) {
@@ -190,8 +192,12 @@ public class ServiceController {
         if(hasRole("SELLER") && entity.getSellerId().equalsIgnoreCase(authentication.getName())) {
             LOGGER.info("delete product");
             Product record = null;
-            productService.delete(entity);
-            response = new ResponseEntity<>(record, HttpStatus.ACCEPTED);
+
+            if(productService.findByProduct(entity.getId()).isPresent()) {
+                productService.delete(entity);
+                response = new ResponseEntity<>(record, HttpStatus.ACCEPTED);
+            }else
+                response = new ResponseEntity<>(record, HttpStatus.NOT_FOUND);
         }
         return response.getStatusCode();
     }
