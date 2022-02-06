@@ -1,0 +1,10 @@
+net\vendingmachine\controller\LoginController.class
+net\vendingmachine\controller\UserController.class
+net\vendingmachine\user\UserServiceImpl.class
+net\vendingmachine\user\UserService.class
+net\vendingmachine\domain\Role.class
+net\vendingmachine\VendingMachineApplication.class
+net\vendingmachine\config\SecurityConfig.class
+net\vendingmachine\domain\User.class
+net\vendingmachine\repository\UserRepository.class
+net\vendingmachine\controller\HomeController.class
