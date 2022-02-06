@@ -177,8 +177,11 @@ public class ServiceController {
         if(hasRole("SELLER") && entity.getSellerId().equalsIgnoreCase(authentication.getName())) {
             LOGGER.info("update product");
             Product record = null;
+            if(productService.findByProduct(entity.getId()).isPresent()) {
             productService.update(entity);
             response = new ResponseEntity<>(record, HttpStatus.ACCEPTED);
+        }else
+                response = new ResponseEntity<>(record, HttpStatus.NOT_FOUND);
         }
         return response.getStatusCode();
     }
