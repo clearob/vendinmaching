@@ -61,8 +61,7 @@ public class ServiceController {
                                      User entity) {
         ResponseEntity<User> response = new ResponseEntity<>(entity, HttpStatus.BAD_REQUEST);
         LOGGER.info("add user");
-        User record = null;
-        record = userService.create(entity);
+        User record = userService.create(entity);
         response = new ResponseEntity<>(record, HttpStatus.CREATED);
         return response.getStatusCode();
     }

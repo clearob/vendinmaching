@@ -18,6 +18,8 @@ cost BIGINT,
 sellerid VARCHAR(255) NOT NULL
 );
 
+ALTER TABLE product ADD CONSTRAINT PRODUCT_UNIQUE UNIQUE ( productname,sellerid );
+
 
 
 commit;
