@@ -14,24 +14,28 @@ import java.util.Optional;
  * To change this template use File | Settings | File Templates.
  */
 
-public enum Deposit {
+public enum Coin {
     FIVE("FIVE",5),
     TEN("TEN",10),
     TWENTY("TWENTY",20),
     FIFTY("FIFTY",50),
     HUNDRED("HUNDRED",100);
 
+    public long getAmount() {
+        return amount;
+    }
+
     private long amount;
     private String value;
 
-    Deposit(String value,long amount) {
+    Coin(String value, long amount) {
         this.value = value;
         this.amount = amount;
     }
 
-    public static boolean findByAmount(long amount) {
+    public static boolean accpetedAmount(long amount) {
         boolean checkValue = false;
-        Optional<Deposit> dep = Arrays.stream(values()).filter(elem -> elem.amount == amount).findFirst();
+        Optional<Coin> dep = Arrays.stream(values()).filter(elem -> elem.amount == amount).findFirst();
         if(dep.isPresent())
             checkValue = true;
         return  checkValue;
