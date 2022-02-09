@@ -36,26 +36,16 @@ class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     protected void configure(HttpSecurity http) throws Exception
     {
-        String[] publicUrls=  {"/api/login/**","/api/user", "/api/allusers", "/api/products"};
+        String[] publicUrls=  {"/api/logout/all","/api/login/**","/api/user", "/api/allusers", "/api/products"};
 
         http
                 .csrf().disable()
                 .authorizeRequests()
-                 .antMatchers(publicUrls).permitAll()
+                .antMatchers(publicUrls).permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .httpBasic();
-        /*
-        http.logout()
-            .logoutUrl("/api/logout/all")
-            .invalidateHttpSession(true)
-            .deleteCookies("JSESSIONID");
 
-        http
-                .sessionManagement()
-                .maximumSessions(1).sessionRegistry(sessionRegistry());
-        http.sessionManagement().maximumSessions(1).expiredUrl("/api/login?expired=true");
-*/
         http.sessionManagement().maximumSessions(1);
     }
 

@@ -20,14 +20,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.net.URI;
+import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,6 +37,9 @@ import java.util.stream.Stream;
 @RequestMapping("api")
 public class ServiceController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServiceController.class);
+
+    @Autowired
+    private SessionRegistry sessionRegistry;
 
     private final UserService userService;
     private final ProductService productService;
@@ -56,16 +59,21 @@ public class ServiceController {
     }
 
 
+
+
     @GetMapping(value = "/login/{u}/{p}",  produces="application/json")
     @ResponseBody
-    public ResponseEntity<String> login(Authentication authentication,HttpServletRequest request,@PathVariable String u,@PathVariable String p) {
+    public ResponseEntity<String> login(final Model model,Authentication authentication,HttpServletRequest request,@PathVariable String u,@PathVariable String p) {
         JSONObject resp = new JSONObject();
         LOGGER.info("login....");
-        if (isAuthenticated()) {
+       List<String> users= userService.getUsersFromSessionRegistry();
+
+        if (users.contains(u)) {
             resp.put("warning","There is already an active session using your account");
             return  ResponseEntity.status(HttpStatus.FOUND).location(URI.create("http://localhost:8080/api/logout/all")).build();
 
         }else {
+
             UsernamePasswordAuthenticationToken token =
                     new UsernamePasswordAuthenticationToken(u, p);
             token.setDetails(new WebAuthenticationDetails(request));
@@ -75,13 +83,25 @@ public class ServiceController {
             user.setRole(Role.ADMIN);
             user.setDeposit(50);
             userService.create(user);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            Principal principal = new Principal() {
+                @Override
+                public String getName() {
+                    return u;
+                }
+            };
+
+
+            sessionRegistry.registerNewSession(request.getSession().getId(), principal);
             return new ResponseEntity<String>(resp.toString(), HttpStatus.CREATED);
         }
     }
 
     private boolean isAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+
+
         if (authentication == null || AnonymousAuthenticationToken.class.
                 isAssignableFrom(authentication.getClass())) {
             return false;
@@ -103,8 +123,7 @@ public class ServiceController {
 
 
 
-    @Autowired
-    private SessionRegistry sessionRegistry;
+
 
 
     public List<String> getUsersFromSessionRegistry() {

@@ -11,19 +11,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
 public class UserServiceImpl implements UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private SessionRegistry sessionRegistry;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
 
@@ -88,4 +94,18 @@ public class UserServiceImpl implements UserService {
     }
 
 
+    @Override
+    public List<String> getUsersFromSessionRegistry() {
+        List<String> users = new ArrayList<>();
+        List<Object> allPrincipals = sessionRegistry.getAllPrincipals();
+
+        return allPrincipals.stream()
+                .filter((u) -> !sessionRegistry.getAllSessions(u, false)
+                        .isEmpty())
+                .map(o -> { if(o instanceof  Principal) return ((Principal) o).getName();
+                    else
+                        return null;
+                }).collect(Collectors.toList());
+
+    }
 }

@@ -24,4 +24,6 @@ public interface UserService extends UserDetailsService {
     void updateDeposit(User entity);
 
     User findUserByName(String name);
+
+    List<String> getUsersFromSessionRegistry();
 }

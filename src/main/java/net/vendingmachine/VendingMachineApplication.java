@@ -9,6 +9,7 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.web.context.request.RequestContextListener;
 
 import javax.servlet.annotation.WebServlet;
 
@@ -25,5 +26,8 @@ public class VendingMachineApplication extends SpringBootServletInitializer {
         SpringApplication.run(VendingMachineApplication.class, args);
     }
 
-
+    @Bean
+    public RequestContextListener requestContextListener() {
+        return new RequestContextListener();
+    }
 }
