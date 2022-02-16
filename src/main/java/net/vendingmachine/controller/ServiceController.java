@@ -121,11 +121,6 @@ public class ServiceController {
 
 
 
-
-
-
-
-
     public List<String> getUsersFromSessionRegistry() {
         return sessionRegistry.getAllPrincipals().stream()
                 .filter(u -> !sessionRegistry.getAllSessions(u, false).isEmpty())
@@ -205,11 +200,14 @@ public class ServiceController {
                               Authentication authentication) {
         ResponseEntity<User> response = new ResponseEntity<User>(entity,HttpStatus.NOT_ACCEPTABLE);
 
-        if(hasRole("BUYER")  && entity.getUsername().equalsIgnoreCase(authentication.getName())) {
+        User user = userService.getUserById(entity.getId());
+        if(hasRole("BUYER")  && user.getUsername().equalsIgnoreCase(authentication.getName())) {
             LOGGER.info("deposit");
             User record = null;
             if(Coin.accpetedAmount(entity.getDeposit())) {
                 long sum = userService.getUserById(entity.getId()).getDeposit() + entity.getDeposit();
+                entity.setUsername(user.getUsername());
+                entity.setPassword(user.getPassword());
                 entity.setDeposit(sum);
                 userService.updateDeposit(entity);
                 response = new ResponseEntity<>(record, HttpStatus.ACCEPTED);
@@ -224,8 +222,8 @@ public class ServiceController {
                                            User entity,
                                    Authentication authentication) {
         ResponseEntity<User> response = new ResponseEntity<User>(entity,HttpStatus.NOT_ACCEPTABLE);
-
-        if(hasRole("BUYER")  && entity.getUsername().equalsIgnoreCase(authentication.getName())) {
+        User user = userService.getUserById(entity.getId());
+        if(hasRole("BUYER")  && user.getUsername().equalsIgnoreCase(authentication.getName())) {
             LOGGER.info("reset deposit");
             User record = null;
 
@@ -246,9 +244,9 @@ public class ServiceController {
     //@PreAuthorize("hasRole(SELLER)")
     @PostMapping(value = "/createproduct", consumes="application/json")
     public HttpStatus create(@RequestBody
-                                     Product entity) {
+                                     Product entity,Authentication authentication) {
         ResponseEntity<Product> response = new ResponseEntity<Product>(entity,HttpStatus.METHOD_NOT_ALLOWED);;
-        if(hasRole("SELLER")) {
+        if(hasRole("SELLER") && entity.getSellerId().equalsIgnoreCase(authentication.getName())) {
             LOGGER.info("add product");
             Product record = null;
             try {
@@ -337,6 +335,7 @@ public class ServiceController {
         return Arrays.toString(moneyback.toArray());
 
     }
+
 
 
 }
