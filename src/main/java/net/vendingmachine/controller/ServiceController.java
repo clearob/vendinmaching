@@ -66,7 +66,7 @@ public class ServiceController {
     public ResponseEntity<String> login(final Model model,Authentication authentication,HttpServletRequest request,@PathVariable String u,@PathVariable String p) {
         JSONObject resp = new JSONObject();
         LOGGER.info("login....");
-       List<String> users= userService.getUsersFromSessionRegistry();
+        List<String> users= userService.getUsersFromSessionRegistry();
 
         if (users.contains(u)) {
             resp.put("warning","There is already an active session using your account");
@@ -199,11 +199,10 @@ public class ServiceController {
                                       User entity,
                               Authentication authentication) {
         ResponseEntity<User> response = new ResponseEntity<User>(entity,HttpStatus.NOT_ACCEPTABLE);
-
+        User record = null;
         User user = userService.getUserById(entity.getId());
         if(hasRole("BUYER")  && user.getUsername().equalsIgnoreCase(authentication.getName())) {
             LOGGER.info("deposit");
-            User record = null;
             if(Coin.accpetedAmount(entity.getDeposit())) {
                 long sum = userService.getUserById(entity.getId()).getDeposit() + entity.getDeposit();
                 entity.setUsername(user.getUsername());
@@ -212,7 +211,8 @@ public class ServiceController {
                 userService.updateDeposit(entity);
                 response = new ResponseEntity<>(record, HttpStatus.ACCEPTED);
             }
-        }
+        }else
+            response = new ResponseEntity<>(record, HttpStatus.NOT_ACCEPTABLE);
         return response.getStatusCode();
     }
 
@@ -223,14 +223,17 @@ public class ServiceController {
                                    Authentication authentication) {
         ResponseEntity<User> response = new ResponseEntity<User>(entity,HttpStatus.NOT_ACCEPTABLE);
         User user = userService.getUserById(entity.getId());
+        User record = null;
         if(hasRole("BUYER")  && user.getUsername().equalsIgnoreCase(authentication.getName())) {
             LOGGER.info("reset deposit");
-            User record = null;
 
+            entity.setUsername(user.getUsername());
+            entity.setPassword(user.getPassword());
             entity.setDeposit(0);
             userService.updateDeposit(entity);
             response = new ResponseEntity<>(record, HttpStatus.ACCEPTED);
-        }
+        }else
+            response = new ResponseEntity<>(record, HttpStatus.NOT_ACCEPTABLE);
         return response.getStatusCode();
     }
 
@@ -246,16 +249,18 @@ public class ServiceController {
     public HttpStatus create(@RequestBody
                                      Product entity,Authentication authentication) {
         ResponseEntity<Product> response = new ResponseEntity<Product>(entity,HttpStatus.METHOD_NOT_ALLOWED);;
+        Product record = null;
         if(hasRole("SELLER") && entity.getSellerId().equalsIgnoreCase(authentication.getName())) {
             LOGGER.info("add product");
-            Product record = null;
+
             try {
                 productService.create(entity);
                 response = new ResponseEntity<>(record, HttpStatus.CREATED);
             }catch (Exception ex){
                 response = new ResponseEntity<>(record, HttpStatus.NOT_ACCEPTABLE);
             }
-        }
+        }else
+            response = new ResponseEntity<>(record, HttpStatus.NOT_ACCEPTABLE);
         return response.getStatusCode();
     }
 
@@ -264,19 +269,26 @@ public class ServiceController {
                                             Product entity,
                                     Authentication authentication) {
         ResponseEntity<Product> response = new ResponseEntity<Product>(entity,HttpStatus.NOT_ACCEPTABLE);
+        Product record = null;
 
-        if(hasRole("SELLER") && entity.getSellerId().equalsIgnoreCase(authentication.getName())) {
-            LOGGER.info("update product");
-            Product record = null;
-            if(productService.findByProduct(entity.getId()).isPresent()) {
-                if(entity.getCost()%5==0) {
-                    productService.update(entity);
+
+        LOGGER.info("update product");
+        if (productService.findByProduct(entity.getId()).isPresent()) {
+            record = productService.findByProduct(entity.getId()).get();
+            if(hasRole("SELLER") && record.getSellerId().equalsIgnoreCase(authentication.getName())) {
+                if (entity.getCost() % 5 == 0) {
+                    record.setCost(entity.getCost());
+                    record.setAmountAvailable(entity.getAmountAvailable());
+                    productService.update(record);
                     response = new ResponseEntity<>(record, HttpStatus.ACCEPTED);
-                }else
+                } else
                     response = new ResponseEntity<>(record, HttpStatus.BAD_REQUEST);
-            }else
-                response = new ResponseEntity<>(record, HttpStatus.NOT_FOUND);
-        }
+            } else
+                response = new ResponseEntity<>(record, HttpStatus.NOT_ACCEPTABLE);
+        }else
+            response = new ResponseEntity<>(record, HttpStatus.NOT_FOUND);
+
+
         return response.getStatusCode();
     }
 
@@ -284,18 +296,19 @@ public class ServiceController {
     public HttpStatus deleteProduct(@RequestBody
                                             Product entity,
                                     Authentication authentication) {
+        LOGGER.info("delete product");
         ResponseEntity<Product> response = new ResponseEntity<Product>(entity,HttpStatus.NOT_ACCEPTABLE);
-
-        if(hasRole("SELLER") && entity.getSellerId().equalsIgnoreCase(authentication.getName())) {
-            LOGGER.info("delete product");
-            Product record = null;
-
-            if(productService.findByProduct(entity.getId()).isPresent()) {
+        Product record = null;
+        if (productService.findByProduct(entity.getId()).isPresent()) {
+            record = productService.findByProduct(entity.getId()).get();
+            if(hasRole("SELLER") && record.getSellerId().equalsIgnoreCase(authentication.getName())) {
                 productService.delete(entity);
                 response = new ResponseEntity<>(record, HttpStatus.ACCEPTED);
             }else
-                response = new ResponseEntity<>(record, HttpStatus.NOT_FOUND);
-        }
+                response = new ResponseEntity<>(record, HttpStatus.NOT_ACCEPTABLE);
+        }else
+            response = new ResponseEntity<>(record, HttpStatus.NOT_FOUND);
+
         return response.getStatusCode();
     }
 
@@ -330,6 +343,7 @@ public class ServiceController {
             div = mod/coin.getAmount();
             for(int j=0 ;j<div;j++)
                 moneyback.add(coin.getAmount());
+            change = mod;
             mod = change%coin.getAmount();
         }
         return Arrays.toString(moneyback.toArray());
