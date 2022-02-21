@@ -332,7 +332,7 @@ public class ServiceController {
     }
 
 
-    private String calculateChange(long change){
+     protected String calculateChange(long change){
 
         List<Long> moneyback = new ArrayList<Long>();
         long div;
