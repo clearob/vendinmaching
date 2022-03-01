@@ -29,27 +29,31 @@
 			"response": []
 		},
 		{
-			"name": "get buy product  http://<host>/api/buy/productId/amount",
+			"name": "post buy product",
 			"request": {
 				"auth": {
-					"type": "basic",
-					"basic": [
+					"type": "bearer",
+					"bearer": [
 						{
-							"key": "username",
-							"value": "userBuyer",
-							"type": "string"
-						},
-						{
-							"key": "password",
-							"value": "userBuyer",
+							"key": "token",
+							"value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJCdXllcjMiLCJpYXQiOjE2NDYwNzc0NjYsImV4cCI6MTY0NjA3NzU4Nn0.vJ6cdK0S5hK8tgZXctZ6HiZ5HuoI6RmmMKescqynVfKgmRB--F590WRU4EpKnKqJMmUeDJgI0jz5Y6vZFUrcWQ",
 							"type": "string"
 						}
 					]
 				},
-				"method": "GET",
+				"method": "POST",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"idProduct\": 1,\r\n    \"amount\": 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
 				"url": {
-					"raw": "http://localhost:8080/api/buy/1/1",
+					"raw": "http://localhost:8080/api/buy",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -57,9 +61,7 @@
 					"port": "8080",
 					"path": [
 						"api",
-						"buy",
-						"1",
-						"1"
+						"buy"
 					]
 				}
 			},
@@ -97,19 +99,7 @@
 			"name": "get logout/all",
 			"request": {
 				"auth": {
-					"type": "basic",
-					"basic": [
-						{
-							"key": "password",
-							"value": "rob",
-							"type": "string"
-						},
-						{
-							"key": "username",
-							"value": "rob",
-							"type": "string"
-						}
-					]
+					"type": "noauth"
 				},
 				"method": "GET",
 				"header": [],
@@ -162,7 +152,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"username\": \"seller3\",\r\n    \"password\":  \"seller3\",\r\n    \"deposit\": 40,\r\n    \"role\": \"SELLER\"\r\n}",
+					"raw": "{\r\n    \"username\": \"seller3\",\r\n    \"password\":  \"seller3\",\r\n    \"deposit\": 50,\r\n    \"role\": \"SELLER\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -194,7 +184,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"username\": \"Buyer2\",\r\n    \"password\":  \"Buyer2\",\r\n    \"deposit\": 40,\r\n    \"role\": \"BUYER\"\r\n}",
+					"raw": "{\r\n    \"username\": \"Buyer3\",\r\n    \"password\":  \"Buyer3\",\r\n    \"deposit\": 70,\r\n    \"role\": \"BUYER\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -217,19 +207,78 @@
 			"response": []
 		},
 		{
+			"name": "post signin buyer",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"Buyer3\",\r\n    \"password\":  \"Buyer3\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/signin",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"signin"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "post signin  selleer",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"seller3\",\r\n    \"password\":  \"seller3\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/signin",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"signin"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "put updateDeposit",
 			"request": {
 				"auth": {
-					"type": "basic",
-					"basic": [
+					"type": "bearer",
+					"bearer": [
 						{
-							"key": "password",
-							"value": "userBuyer",
-							"type": "string"
-						},
-						{
-							"key": "username",
-							"value": "userBuyer",
+							"key": "token",
+							"value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJCdXllcjMiLCJpYXQiOjE2NDYwNzc0NjYsImV4cCI6MTY0NjA3NzU4Nn0.vJ6cdK0S5hK8tgZXctZ6HiZ5HuoI6RmmMKescqynVfKgmRB--F590WRU4EpKnKqJMmUeDJgI0jz5Y6vZFUrcWQ",
 							"type": "string"
 						}
 					]
@@ -238,7 +287,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": " {\r\n        \"id\": 1,\r\n        \"deposit\": 100,\r\n        \"role\": \"BUYER\"\r\n        \r\n    }",
+					"raw": "{\r\n        \"deposit\": 10\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -264,16 +313,11 @@
 			"name": "put resetDeposit",
 			"request": {
 				"auth": {
-					"type": "basic",
-					"basic": [
+					"type": "bearer",
+					"bearer": [
 						{
-							"key": "password",
-							"value": "Buyer1",
-							"type": "string"
-						},
-						{
-							"key": "username",
-							"value": "Buyer1",
+							"key": "token",
+							"value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJCdXllcjMiLCJpYXQiOjE2NDYwNzc0NjYsImV4cCI6MTY0NjA3NzU4Nn0.vJ6cdK0S5hK8tgZXctZ6HiZ5HuoI6RmmMKescqynVfKgmRB--F590WRU4EpKnKqJMmUeDJgI0jz5Y6vZFUrcWQ",
 							"type": "string"
 						}
 					]
@@ -282,7 +326,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n        \"id\": 2,\r\n        \"deposit\": 0,\r\n        \"role\": \"BUYER\",\r\n        \"enabled\": false,\r\n        \"accountNonLocked\": false,\r\n        \"authorities\": null,\r\n        \"credentialsNonExpired\": false,\r\n        \"accountNonExpired\": false\r\n    }",
+					"raw": "{\r\n        \"deposit\": 0\r\n    }",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -308,16 +352,11 @@
 			"name": "put update Prooduct",
 			"request": {
 				"auth": {
-					"type": "basic",
-					"basic": [
+					"type": "bearer",
+					"bearer": [
 						{
-							"key": "username",
-							"value": "seller3",
-							"type": "string"
-						},
-						{
-							"key": "password",
-							"value": "seller3",
+							"key": "token",
+							"value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzZWxsZXIzIiwiaWF0IjoxNjQ2MDc2MjQ0LCJleHAiOjE2NDYwNzYzNjR9.Xmxt8i13fCCCM5apbd0b8nASMQrPL8VXfpLANOQ2OSHdHaOPAe0AN204hNzZcfeLXs3_JTz8iWnp7uRNT8r9nw",
 							"type": "string"
 						}
 					]
@@ -326,7 +365,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "  {\r\n        \"id\": 1,\r\n        \"productName\": \"product2\",\r\n        \"amountAvailable\": 43,\r\n        \"cost\": 171\r\n    }",
+					"raw": "  {\r\n        \"id\": 1,\r\n        \"productName\": \"product3\",\r\n        \"amountAvailable\": 43,\r\n        \"cost\": 130\r\n    }",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -352,16 +391,11 @@
 			"name": "delete Prooduct",
 			"request": {
 				"auth": {
-					"type": "basic",
-					"basic": [
+					"type": "bearer",
+					"bearer": [
 						{
-							"key": "password",
-							"value": "seller3",
-							"type": "string"
-						},
-						{
-							"key": "username",
-							"value": "seller3",
+							"key": "token",
+							"value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzZWxsZXI0IiwiaWF0IjoxNjQ2MDQ5MTc0LCJleHAiOjE2NDYwNDkyOTR9.44--gbULOaoCaFPvgMkuehsv8I3YZAO1RAsx9an9qA2Qsg4ZxwLLy7MFFQmqA5gdfllH78j6A1J3pGJYcbUf9Q",
 							"type": "string"
 						}
 					]
@@ -370,7 +404,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n        \"id\": 1,\r\n        \"productName\": \"product2\",\r\n        \"amountAvailable\": 20,\r\n        \"cost\": 70\r\n    }",
+					"raw": "{\r\n        \"id\": 2,\r\n        \"productName\": \"product2\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -396,16 +430,11 @@
 			"name": "post create Prooduct",
 			"request": {
 				"auth": {
-					"type": "basic",
-					"basic": [
+					"type": "bearer",
+					"bearer": [
 						{
-							"key": "password",
-							"value": "seller3",
-							"type": "string"
-						},
-						{
-							"key": "username",
-							"value": "seller3",
+							"key": "token",
+							"value": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJzZWxsZXIzIiwiaWF0IjoxNjQ2MDc3MDQyLCJleHAiOjE2NDYwNzcxNjJ9.H_FjUA_rWXdZDxkl9WwPTzupqOvZShwUCfSw-NarX-KsJ9dACr2pvS3JPbRO60OfVP8N-7UZvgvtIkKZEcmJQQ",
 							"type": "string"
 						}
 					]
@@ -414,7 +443,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"amountAvailable\":20,\r\n    \"cost\":70,\r\n    \"productName\":\"product2\",\r\n    \"sellerId\":\"seller3\"\r\n}",
+					"raw": "{\r\n    \"amountAvailable\":74,\r\n    \"cost\":110,\r\n    \"productName\":\"product3\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"

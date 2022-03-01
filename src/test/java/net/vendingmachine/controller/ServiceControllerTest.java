@@ -37,9 +37,9 @@ class ServiceControllerTest {
 
     @Test
     void calculateChange() {
-        long change = 115;
+        long change = 10;
         String res = serviceController.calculateChange(change);
-        assertTrue(res.equalsIgnoreCase("[100, 10, 5]"));
+        assertTrue(res.equalsIgnoreCase("[20, 10]"));
 
     }
 }

@@ -1,0 +1,93 @@
+API
+
+1. create user
+POST --->  http://localhost:8080/api/user
+example of payload
+{
+    "username": "Buyer3",
+    "password":  "Buyer3",
+    "deposit": 70,
+    "role": "BUYER"
+}
+
+2. login (Buyer)
+POST ---> http://localhost:8080/api/signin
+example of payload
+{
+    "username": "Buyer3",
+    "password":  "Buyer3"
+}
+
+example of response
+{
+    "id": 1,
+    "username": "Buyer3",
+    "tokenType": "Bearer",
+    "accessToken": "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJCdXllcjMiLCJpYXQiOjE2NDU5OTQ1OTAsImV4cCI6MTY0NTk5NDcxMH0.FsENC3g9Lfl4wg62wYmtNB_R4Bi0UvtyGaP66-fpqeiCkmZeXIqsDToCk1Ci4pD4N5026uhazOpz5V_e_vP-Mw"
+}
+
+3. update deposit
+PUT ----> http://localhost:8080/api/deposit
+example of payload
+{
+        "deposit": 100,
+        "role": "BUYER"
+}
+with Authorzation of type Bearer Token generate at login
+
+4. reset deposit
+PUT ----> http://localhost:8080/api/reset
+example of payload
+{
+        "deposit": 0,
+        "role": "BUYER"
+}
+with Authorzation of type Bearer Token generate at login
+
+
+5. login (Seller)
+POST ---> http://localhost:8080/api/signin
+example of payload
+   {
+       "username": "Seller3",
+       "password":  "Seller3"
+   }
+
+6. create product
+POST ----> http://localhost:8080/api/createproduct
+example of payload
+{
+    "amountAvailable":74,
+    "cost":110,
+    "productName":"product2"
+}
+with Authorzation of type Bearer Token generate at login
+
+7. update product
+PUT ---> http://localhost:8080/api/updateproduct
+example of payload
+ {
+        "id": 1,
+        "productName": "product2",
+        "amountAvailable": 43,
+        "cost": 130
+ }
+ with Authorzation of type Bearer Token generate at login
+
+ 9. delete product
+ DELETE --> http://localhost:8080/api/deleteproduct
+ example of payload
+ {
+         "id": 1,
+         "productName": "product2"
+ }
+ with Authorzation of type Bearer Token generate at login
+
+ 10. buy a product
+ POST ---> http://localhost:8080/api/buy
+ example of payload
+ {
+     "idProduct": 1,
+     "amount": 1
+ }
+with Authorzation of type Bearer Token generate at login

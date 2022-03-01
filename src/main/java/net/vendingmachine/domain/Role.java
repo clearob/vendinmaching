@@ -1,5 +1,7 @@
 package net.vendingmachine.domain;
 
+import com.sun.xml.bind.v2.schemagen.episode.Package;
+
 /**
  * Created by IntelliJ IDEA.
  * Project : spring-boot-security-example
@@ -13,6 +15,13 @@ package net.vendingmachine.domain;
 
 public enum Role {
 
-    USER, ADMIN,SELLER,BUYER
+    USER, ADMIN,SELLER,BUYER;
 
+
+   /*
+    public String getName() {
+        return "rolexxxx";
+    }
+
+    */
 }

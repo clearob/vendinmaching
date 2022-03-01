@@ -1,10 +1,13 @@
 package net.vendingmachine.controller;
 
 
+import net.vendingmachine.config.JwtUtils;
 import net.vendingmachine.domain.Coin;
 import net.vendingmachine.domain.Product;
-import net.vendingmachine.domain.Role;
 import net.vendingmachine.domain.User;
+import net.vendingmachine.payload.JwtResponse;
+import net.vendingmachine.payload.LoginRequest;
+import net.vendingmachine.payload.ToBuy;
 import net.vendingmachine.product.ProductService;
 import net.vendingmachine.user.UserService;
 import org.json.JSONObject;
@@ -13,24 +16,23 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
 import java.net.URI;
-import java.security.Principal;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 
 
 @RestController
@@ -41,6 +43,14 @@ public class ServiceController {
     @Autowired
     private SessionRegistry sessionRegistry;
 
+    @Autowired
+    AuthenticationManager authenticationManager;
+    @Autowired
+    JwtUtils jwtUtils;
+
+    List<String> loggedUser = new ArrayList<>();
+
+
     private final UserService userService;
     private final ProductService productService;
 
@@ -48,6 +58,9 @@ public class ServiceController {
         this.userService = userService;
         this.productService = productService;
     }
+
+
+
 
 
 
@@ -61,73 +74,32 @@ public class ServiceController {
 
 
 
-    @GetMapping(value = "/login/{u}/{p}",  produces="application/json")
-    @ResponseBody
-    public ResponseEntity<String> login(final Model model,Authentication authentication,HttpServletRequest request,@PathVariable String u,@PathVariable String p) {
-        JSONObject resp = new JSONObject();
-        LOGGER.info("login....");
-        List<String> users= userService.getUsersFromSessionRegistry();
-
-        if (users.contains(u)) {
-            resp.put("warning","There is already an active session using your account");
-            return  ResponseEntity.status(HttpStatus.FOUND).location(URI.create("http://localhost:8080/api/logout/all")).build();
-
-        }else {
-
-            UsernamePasswordAuthenticationToken token =
-                    new UsernamePasswordAuthenticationToken(u, p);
-            token.setDetails(new WebAuthenticationDetails(request));
-            User user = new User();
-            user.setUsername(u);
-            user.setPassword(p);
-            user.setRole(Role.ADMIN);
-            user.setDeposit(50);
-            userService.create(user);
-
-            Principal principal = new Principal() {
-                @Override
-                public String getName() {
-                    return u;
-                }
-            };
 
 
-            sessionRegistry.registerNewSession(request.getSession().getId(), principal);
-            return new ResponseEntity<String>(resp.toString(), HttpStatus.CREATED);
-        }
-    }
-
-    private boolean isAuthenticated() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-
-
-        if (authentication == null || AnonymousAuthenticationToken.class.
-                isAssignableFrom(authentication.getClass())) {
-            return false;
-        }
-        return authentication.isAuthenticated();
-    }
 
 
     @RequestMapping(value="/logout/all",method = RequestMethod.GET)
     public String logout(HttpServletRequest request){
         LOGGER.info("logout...");
         HttpSession httpSession = request.getSession();
+
+        List<SessionInformation> sessions = userService.getActiveSessions();
+        sessions.stream().forEach(elem -> {
+            elem.expireNow();
+            sessionRegistry.removeSessionInformation(elem.getSessionId());
+            sessionRegistry.getAllPrincipals().remove(elem.getPrincipal());
+
+        });
+        sessionRegistry.removeSessionInformation(httpSession.getId());
         httpSession.invalidate();
         SecurityContextHolder.getContext().setAuthentication(null);
+        sessionRegistry.getAllPrincipals().clear();
+
+
+
+
         return "redirect:/api/login";
     }
-
-
-
-    public List<String> getUsersFromSessionRegistry() {
-        return sessionRegistry.getAllPrincipals().stream()
-                .filter(u -> !sessionRegistry.getAllSessions(u, false).isEmpty())
-                .map(Object::toString)
-                .collect(Collectors.toList());
-    }
-
 
 
 
@@ -154,21 +126,66 @@ public class ServiceController {
         return response.getStatusCode();
     }
 
-    @GetMapping(value = "/buy/{productId}/{amount}", produces="application/json")
-    @ResponseBody
-    public  ResponseEntity<String> buy(@PathVariable long productId,@PathVariable int amount,
-                                       Authentication authentication) {
-        LOGGER.info("buy product {}. amount {}",productId,amount);
+
+    @PostMapping("/signin")
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest,HttpServletRequest request) {
         JSONObject resp = new JSONObject();
-        if(hasRole("BUYER")) {
-            Optional<Product> optProduct = productService.findByProduct(productId);
+
+        System.out.println(loginRequest.getUsername());
+        System.out.println(loginRequest.getPassword());
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = jwtUtils.generateJwtToken(authentication);
+
+        User user =  userService.findUserByName(authentication.getName());
+        List<SessionInformation> sessions = sessionRegistry.getAllSessions(authentication.getPrincipal(),false);
+
+        if(sessions.size()>0){
+            HttpSession httpSession = request.getSession();
+            httpSession.invalidate();
+
+            loggedUser.remove(loginRequest.getUsername());
+            sessionRegistry.removeSessionInformation(httpSession.getId());
+            sessionRegistry.getAllPrincipals().clear();
+
+            SecurityContextHolder.getContext().setAuthentication(null);
+            resp.put("warning","There is already an active session using your account");
+            return  ResponseEntity.status(HttpStatus.FOUND).location(URI.create("http://localhost:8080/api/logout/all")).build();
+        }
+        else {
+            loggedUser.add(loginRequest.getUsername());
+            sessionRegistry.registerNewSession(request.getSession().getId(), authentication.getPrincipal());
+            return ResponseEntity.ok(new JwtResponse(jwt,
+                    user.getId(),
+                    user.getUsername(),
+                    user.getRole()));
+        }
+    }
+
+
+    @PostMapping(value = "/buy", produces="application/json")
+    @ResponseBody
+    public  ResponseEntity<String> buy(@RequestBody
+                                               ToBuy entity,
+                                       @RequestHeader("Authorization") String authString,
+                                       Authentication authentication) {
+        LOGGER.info("buy product {}. amount {}",entity.getIdProduct(),entity.getAmount());
+        JSONObject resp = new JSONObject();
+        if(hasRole("BUYER")
+                && checkUserExist(authentication.getName())
+                && jwtUtils.validateJwtToken(authString)) {
+            Optional<Product> optProduct = productService.findByProduct(entity.getIdProduct());
             User user = userService.findUserByName(authentication.getName());
             if (optProduct.isPresent()) {
                 long available = optProduct.get().getAmountAvailable();
                 String productName = optProduct.get().getProductName();
                 long cost = optProduct.get().getCost();
-                long requiredDeposit = cost * amount;
-                if (available >= amount){
+                long requiredDeposit = cost * entity.getAmount();
+                if (available >= entity.getAmount()){
                     if( user.getDeposit()>=requiredDeposit){
                         resp.put("you are  buying product ", optProduct.get().getProductName());
                         resp.put("total expense ", requiredDeposit);
@@ -176,7 +193,7 @@ public class ServiceController {
                         String calcChange = calculateChange(change);
                         resp.put("change ",calcChange);
                         //decrease product's amount available
-                        optProduct.get().setAmountAvailable(available-amount);
+                        optProduct.get().setAmountAvailable(available-entity.getAmount());
                         productService.update(optProduct.get());
                         user.setDeposit(change);
                         userService.updateDeposit(user);
@@ -197,16 +214,22 @@ public class ServiceController {
     @PutMapping(value = "/deposit", consumes="application/json")
     public HttpStatus deposit(@RequestBody
                                       User entity,
+                              @RequestHeader("Authorization") String authString,
                               Authentication authentication) {
         ResponseEntity<User> response = new ResponseEntity<User>(entity,HttpStatus.NOT_ACCEPTABLE);
         User record = null;
-        User user = userService.getUserById(entity.getId());
-        if(hasRole("BUYER")  && user.getUsername().equalsIgnoreCase(authentication.getName())) {
+
+        if(hasRole("BUYER")
+                && checkUserExist(authentication.getName())
+                && jwtUtils.validateJwtToken(authString)) {
             LOGGER.info("deposit");
+            User user = userService.findUserByName(jwtUtils.getUserNameFromJwtToken(authString));
+            entity.setId(user.getId());
             if(Coin.accpetedAmount(entity.getDeposit())) {
                 long sum = userService.getUserById(entity.getId()).getDeposit() + entity.getDeposit();
                 entity.setUsername(user.getUsername());
                 entity.setPassword(user.getPassword());
+                entity.setRole(user.getRole());
                 entity.setDeposit(sum);
                 userService.updateDeposit(entity);
                 response = new ResponseEntity<>(record, HttpStatus.ACCEPTED);
@@ -220,15 +243,21 @@ public class ServiceController {
     @PutMapping(value = "/reset", consumes="application/json")
     public HttpStatus resetDeposit(@RequestBody
                                            User entity,
+                                   @RequestHeader("Authorization") String authString,
                                    Authentication authentication) {
         ResponseEntity<User> response = new ResponseEntity<User>(entity,HttpStatus.NOT_ACCEPTABLE);
-        User user = userService.getUserById(entity.getId());
-        User record = null;
-        if(hasRole("BUYER")  && user.getUsername().equalsIgnoreCase(authentication.getName())) {
-            LOGGER.info("reset deposit");
 
+
+        User record = null;
+        if(hasRole("BUYER")
+                && checkUserExist(authentication.getName())
+                && jwtUtils.validateJwtToken(authString) ) {
+            LOGGER.info("reset deposit");
+            User user = userService.findUserByName(jwtUtils.getUserNameFromJwtToken(authString));
+            entity.setId(user.getId());
             entity.setUsername(user.getUsername());
             entity.setPassword(user.getPassword());
+            entity.setRole(user.getRole());
             entity.setDeposit(0);
             userService.updateDeposit(entity);
             response = new ResponseEntity<>(record, HttpStatus.ACCEPTED);
@@ -244,16 +273,21 @@ public class ServiceController {
         return productService.getAllProducts();
     }
 
-    //@PreAuthorize("hasRole(SELLER)")
+
     @PostMapping(value = "/createproduct", consumes="application/json")
     public HttpStatus create(@RequestBody
-                                     Product entity,Authentication authentication) {
+                                     Product entity,
+                             @RequestHeader("Authorization") String authString,
+                             Authentication authentication) {
         ResponseEntity<Product> response = new ResponseEntity<Product>(entity,HttpStatus.METHOD_NOT_ALLOWED);;
         Product record = null;
-        if(hasRole("SELLER") && entity.getSellerId().equalsIgnoreCase(authentication.getName())) {
+        if(hasRole("SELLER")
+                && checkUserExist(authentication.getName())
+                && jwtUtils.validateJwtToken(authString)) {
             LOGGER.info("add product");
-
+            User user = userService.findUserByName(jwtUtils.getUserNameFromJwtToken(authString));
             try {
+                entity.setSellerId(user.getUsername());
                 productService.create(entity);
                 response = new ResponseEntity<>(record, HttpStatus.CREATED);
             }catch (Exception ex){
@@ -267,6 +301,7 @@ public class ServiceController {
     @PutMapping(value = "/updateproduct", consumes="application/json")
     public HttpStatus updateProduct(@RequestBody
                                             Product entity,
+                                    @RequestHeader("Authorization") String authString,
                                     Authentication authentication) {
         ResponseEntity<Product> response = new ResponseEntity<Product>(entity,HttpStatus.NOT_ACCEPTABLE);
         Product record = null;
@@ -275,7 +310,9 @@ public class ServiceController {
         LOGGER.info("update product");
         if (productService.findByProduct(entity.getId()).isPresent()) {
             record = productService.findByProduct(entity.getId()).get();
-            if(hasRole("SELLER") && record.getSellerId().equalsIgnoreCase(authentication.getName())) {
+            if(hasRole("SELLER")  && jwtUtils.validateJwtToken(authString)
+                    && checkUserExist(authentication.getName())
+                    && record.getSellerId().equalsIgnoreCase(authentication.getName())) {
                 if (entity.getCost() % 5 == 0) {
                     record.setCost(entity.getCost());
                     record.setAmountAvailable(entity.getAmountAvailable());
@@ -292,16 +329,29 @@ public class ServiceController {
         return response.getStatusCode();
     }
 
+    private boolean checkUserExist(String name){
+        List<Object> users  = sessionRegistry.getAllPrincipals();
+        boolean res = false;
+       if(loggedUser.contains(name))
+           res=true;
+        return res;
+    }
+
+
     @DeleteMapping(value = "/deleteproduct", consumes="application/json")
     public HttpStatus deleteProduct(@RequestBody
                                             Product entity,
+                                    @RequestHeader("Authorization") String authString,
                                     Authentication authentication) {
         LOGGER.info("delete product");
         ResponseEntity<Product> response = new ResponseEntity<Product>(entity,HttpStatus.NOT_ACCEPTABLE);
         Product record = null;
         if (productService.findByProduct(entity.getId()).isPresent()) {
             record = productService.findByProduct(entity.getId()).get();
-            if(hasRole("SELLER") && record.getSellerId().equalsIgnoreCase(authentication.getName())) {
+            if(hasRole("SELLER")
+                    && jwtUtils.validateJwtToken(authString)
+                    && checkUserExist(authentication.getName())
+                    && record.getSellerId().equalsIgnoreCase(authentication.getName())) {
                 productService.delete(entity);
                 response = new ResponseEntity<>(record, HttpStatus.ACCEPTED);
             }else
@@ -311,6 +361,7 @@ public class ServiceController {
 
         return response.getStatusCode();
     }
+
 
 
     protected boolean hasRole(String role) {
@@ -332,7 +383,7 @@ public class ServiceController {
     }
 
 
-     protected String calculateChange(long change){
+    protected String calculateChange(long change){
 
         List<Long> moneyback = new ArrayList<Long>();
         long div;

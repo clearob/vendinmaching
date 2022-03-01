@@ -1,10 +1,14 @@
 package net.vendingmachine.domain;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 @Entity
@@ -25,6 +29,7 @@ public class User implements UserDetails {
 
 
 
+
     @Column(name = "deposit", nullable = false)
     private long deposit;
 
@@ -32,14 +37,20 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+    public void setId(long id) {
+        this.id = id;
+    }
+
     public Long getId() {
         return id;
     }
 
 
+
     public String getUsername() {
         return username;
     }
+
 
 
     public long getDeposit() {
@@ -49,6 +60,8 @@ public class User implements UserDetails {
     public void setDeposit(long deposit) {
         this.deposit = deposit;
     }
+
+
 
 
     @Override
@@ -95,6 +108,9 @@ public class User implements UserDetails {
     public void setRole(Role role) {
         this.role = role;
     }
+
+
+
 
     @Override
     public String toString() {
